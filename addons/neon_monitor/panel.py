@@ -123,18 +123,9 @@ button.neon-press:active.neon-card {
     box-shadow: none;
 }
 .neon-buttons button label { font-size: 1.0em; color: #FFFFFF; }
-.neon-mini button {
-    margin: 2px 0 0 0;
-    padding: 2px 4px;
-    border-radius: 9px;
-    border: 1px solid rgba(56, 200, 255, 0.55);
-    background-image: linear-gradient(to bottom, #12295C, #0A1735);
-    box-shadow: 0 0 6px rgba(56, 160, 255, 0.35);
-}
-.neon-mini button:active { box-shadow: 0 0 14px rgba(56, 200, 255, 1.0); }
-.neon-mini button label { font-size: 0.75em; font-weight: bold; color: #FFFFFF; }
 .neon-idle .neon-tile-val { font-size: 1.3em; }
 .neon-idle .neon-tile-sub { font-size: 0.72em; }
+button.neon-side label { font-size: 0.7em; font-weight: bold; }
 """
 
 _css_loaded = False
@@ -337,29 +328,9 @@ class Panel(StockPanel):
             self.neon[key] = self._label("--:--:--", "neon-time", 0.5)
             times.attach(self.neon[key], col, 1, 1, 1)
         self.neon["finish"] = self._label("", "neon-muted", 0.5)
-        # Reprint / Close live inside the card, so the bottom button row can
-        # disappear when no print is running
-        acts = Gtk.Box(spacing=6, homogeneous=True, no_show_all=True)
-        acts.get_style_context().add_class("neon-mini")
-        for key, icon, text, cb in (
-            ("reprint", "refresh", _("Restart"), self.restart),
-            ("close", "main", _("Menu"), self.close_panel),
-        ):
-            inner = Gtk.Box(spacing=3, halign=Gtk.Align.CENTER)
-            inner.add(self._gtk.Image(icon, fs * 0.95, fs * 0.95))
-            inner.add(self._label(text))
-            b = Gtk.Button()
-            b.add(inner)
-            b.connect("clicked", cb)
-            b.connect("clicked", self._screen.screensaver.reset_timeout)
-            b.show_all()
-            acts.add(b)
-            self.neon[key] = b
-        self.neon["actions"] = acts
         prog = self._card(overlay)
         prog.add(times)
         prog.add(self.neon["finish"])
-        prog.add(acts)
         root.attach(prog, 8, 0, 6, 1)
 
         # ---- temperatures
@@ -669,14 +640,14 @@ class Panel(StockPanel):
             self._neon_buttons()
 
     def _neon_buttons(self):
-        """Bottom row only while a print runs; otherwise Restart / Main Menu
-        move into the progress card and the tiles take the free space."""
+        """Bottom row only while a print runs. After a print ends (complete,
+        cancelled, error) or with nothing loaded, Main Menu and Restart move to
+        the side bar and the tiles take the free space."""
         active = self.state in ("printing", "paused", "cancelling")
-        bgrid, acts = self.neon["bgrid"], self.neon["actions"]
+        bgrid = self.neon["bgrid"]
         ctx = self.neon["root"].get_style_context()
         if active:
             ctx.remove_class("neon-idle")
-            acts.hide()
             bgrid.set_no_show_all(False)
             bgrid.show_all()
             self.neon["finish"].show()
@@ -685,8 +656,65 @@ class Panel(StockPanel):
             bgrid.set_no_show_all(True)
             bgrid.hide()
             self.neon["finish"].hide()
-            self.neon["reprint"].set_sensitive(bool(self.filename))
-            acts.show()
+        self._side_buttons(not active)
+
+    # ---------------------------------------------------------- side bar
+    def _side_buttons(self, show):
+        """Main Menu + Restart in KlipperScreen's left action bar."""
+        bp = self._screen.base_panel
+        side = getattr(bp, "_neon_side", None)
+        if side is None:
+            if not show:
+                return
+            side = {}
+            scale = getattr(bp, "abscale", self._gtk.bsidescale * 1.1)
+            for key, icon, text in (
+                ("menu", "main", _("Main Menu")),
+                ("restart", "refresh", _("Restart")),
+            ):
+                b = self._gtk.Button(icon, text, None, scale, Gtk.PositionType.TOP, 1)
+                b.get_style_context().add_class("neon-side")
+                b.set_no_show_all(True)
+                b.connect("clicked", self._side_clicked, key)
+                bp.action_bar.add(b)
+                side[key] = b
+            bp._neon_side = side
+            bp._neon_owner = self
+            # first in the bar
+            bp.action_bar.reorder_child(side["restart"], 0)
+            bp.action_bar.reorder_child(side["menu"], 0)
+        bp._neon_owner = self
+        stock = [bp.control.get("back"), bp.control.get("home")]
+        if show:
+            for w in stock:
+                if w is not None:
+                    w.set_no_show_all(True)
+                    w.hide()
+            want = {"menu": True, "restart": bool(self.filename)}
+        else:
+            want = {"menu": False, "restart": False}
+        for key, visible in want.items():
+            b = side[key]
+            if visible:
+                b.set_no_show_all(False)
+                b.show_all()
+            else:
+                b.set_no_show_all(True)
+                b.hide()
+        if not show:
+            for w in stock:
+                if w is not None:
+                    w.set_no_show_all(False)
+                    w.show()
+
+    def _side_clicked(self, widget, key):
+        owner = getattr(self._screen.base_panel, "_neon_owner", None) or self
+        self._screen.screensaver.reset_timeout(widget)
+        if key == "menu":
+            owner.can_close = True
+            owner.close_panel()
+        elif key == "restart" and owner.filename:
+            owner.restart(widget)
 
     def show_file_thumbnail(self):
         if not getattr(self, "neon_enabled", False) or not hasattr(self, "_thumb_size"):
@@ -759,6 +787,18 @@ class Panel(StockPanel):
             self._thumb_tries = 0
         super().update_filename(filename)
 
+    def show_fullscreen_thumbnail(self, widget):
+        """Tap on the photo box: while printing, show the photo full screen
+        (stock); otherwise open the file list, same as Print on the main menu."""
+        if getattr(self, "neon_enabled", False) and self.state not in (
+            "printing",
+            "paused",
+            "cancelling",
+        ):
+            self.menu_item_clicked(widget, {"panel": "gcodes", "name": _("Print")})
+            return
+        super().show_fullscreen_thumbnail(widget)
+
     def _show_logo(self):
         """No file loaded (standby): show the neon standby emblem."""
         text = _("No print loaded")
@@ -805,6 +845,8 @@ class Panel(StockPanel):
 
     def deactivate(self):
         super().deactivate()
+        if getattr(self, "neon_enabled", False):
+            self._side_buttons(False)
         if self._neon_timer is not None:
             GLib.source_remove(self._neon_timer)
             self._neon_timer = None
@@ -869,6 +911,8 @@ class Panel(StockPanel):
             parts.append(f"Z {z:.2f} mm")
         elif lh:
             parts.append(f"{lh:.2f} mm")
+        if self.state not in ("printing", "paused", "cancelling"):
+            parts.append(_("Tap photo to print"))
         self.neon["layer"].set_label("  •  ".join(parts) if parts else " ")
 
     def _update_temps(self):
@@ -891,7 +935,10 @@ class Panel(StockPanel):
         tile = self.neon["tiles"].get(key)
         if tile is None:
             return
-        tile["val"].set_label(value)
+        if "<" in value:
+            tile["val"].set_markup(value)
+        else:
+            tile["val"].set_label(value)
         tile["sub"].set_label(sub)
         tile["bar"].set(fraction, color)
 
@@ -910,11 +957,23 @@ class Panel(StockPanel):
                 spd = float(spd) if isinstance(spd, (int, float)) else None
                 self._set_tile(key, f"{spd * 100:.0f}%" if spd is not None else "N/A", "", spd)
         # speed
+        # actual = live toolhead velocity, setpoint = G-code feedrate x speed factor
         sf = p.get_stat("gcode_move", "speed_factor")
+        feed = p.get_stat("gcode_move", "speed")
         vel = p.get_stat("motion_report", "live_velocity")
         if isinstance(sf, (int, float)):
-            sub = f"{float(vel):.0f} mm/s" if isinstance(vel, (int, float)) else ""
-            self._set_tile("speed", f"{sf * 100:.0f}%", sub, sf / 1.5)
+            act = float(vel) if isinstance(vel, (int, float)) else None
+            setp = float(feed) / 60 * sf if isinstance(feed, (int, float)) else None
+            if self.state in ("printing", "paused") and act is not None and setp:
+                self._set_tile(
+                    "speed",
+                    f'{act:.0f}<span size="small" weight="normal"> / {setp:.0f}</span>',
+                    f"mm/s · {sf * 100:.0f}%",
+                    act / setp,
+                    GREEN if act >= setp * 0.5 else AMBER,
+                )
+            else:
+                self._set_tile("speed", f"{sf * 100:.0f}%", "speed factor", sf / 1.5)
         # flow
         ef = p.get_stat("gcode_move", "extrude_factor")
         if isinstance(ef, (int, float)):
