@@ -1,0 +1,412 @@
+/* Neon theme for KlipperScreen
+ * Dark navy panels, blue neon outlines, green / amber / red status colours.
+ * Built for 800x480 but scales with KlipperScreen's font size like every theme.
+ */
+@define-color text #E6F1FF;
+@define-color text-muted #8FA8CC;
+@define-color text-inv #050A14;
+@define-color bg #060C18;
+@define-color bg-panel #0B1630;
+@define-color bg-panel2 #10204A;
+@define-color buttons-bg #0B1733;
+@define-color neon #38C8FF;
+@define-color neon-dim rgba(56, 200, 255, 0.45);
+@define-color neon-blue #2F7BFF;
+
+@define-color color1 #38C8FF;
+@define-color color2 #B266FF;
+@define-color color3 #3DEB6E;
+@define-color color4 #FFA41B;
+
+@define-color echo #1F9D55;
+@define-color warning #E08A00;
+@define-color error #D92D3A;
+
+@define-color active #1765E8;
+@define-color active-dark #132A5C;
+@define-color lines #2A4A80;
+@define-color slider #38C8FF;
+@define-color switch-scale-bg #1765E8;
+
+* {
+    color: @text;
+}
+
+/* ---------- base surfaces ---------- */
+window {
+    background-color: @bg;
+    background-image: radial-gradient(ellipse at 50% 0%, #0E2148 0%, @bg 70%);
+}
+
+junction,
+list row,
+treeview.view {
+    background-color: @bg;
+}
+
+label {
+    color: @text;
+}
+
+separator {
+    background-color: @lines;
+}
+
+/* ---------- title bar & action bar ---------- */
+.title_bar {
+    background-image: linear-gradient(to bottom, #0F2148, #091530);
+    border-bottom: 1px solid @neon-dim;
+    box-shadow: 0 2px 8px rgba(47, 123, 255, 0.35);
+    padding: 0 .4em;
+}
+
+.title_bar label {
+    font-weight: bold;
+    color: @text;
+}
+
+.action_bar {
+    background-image: linear-gradient(to right, #081228, #0B1A3A);
+    border-right: 1px solid @neon-dim;
+    box-shadow: 2px 0 8px rgba(47, 123, 255, 0.30);
+    padding: .25em .1em;
+}
+
+.action_bar button {
+    background-color: @buttons-bg;
+    background-image: linear-gradient(to bottom, #11285A, #0A1735);
+    border: 1px solid @neon-dim;
+    border-radius: .6em;
+    margin: .25em .3em;
+    box-shadow: 0 0 6px rgba(56, 200, 255, 0.25);
+}
+
+.action_bar button:active {
+    background-image: none;
+    background-color: @active;
+    border-color: @neon;
+    box-shadow: 0 0 12px rgba(56, 200, 255, 0.8);
+}
+
+/* ---------- buttons ---------- */
+button {
+    background-color: @bg;
+    border-radius: .6em;
+}
+
+button.color1,
+button.color2,
+button.color3,
+button.color4 {
+    background-color: @buttons-bg;
+    background-image: linear-gradient(to bottom, #102552, #0A1633);
+    border: 1px solid @neon-dim;
+    border-radius: .7em;
+    margin: .3em;
+    padding: .3em;
+    box-shadow: 0 0 6px rgba(56, 160, 255, 0.30), inset 0 0 10px rgba(56, 160, 255, 0.10);
+}
+
+button.color1 { border-bottom: .2em solid @color1; }
+button.color2 { border-bottom: .2em solid @color2; }
+button.color3 { border-bottom: .2em solid @color3; }
+button.color4 { border-bottom: .2em solid @color4; }
+
+button.color1 label,
+button.color2 label,
+button.color3 label,
+button.color4 label {
+    color: @text;
+}
+
+.active image,
+button:active,
+button.active,
+button.color1:active,
+button.color2:active,
+button.color3:active,
+button.color4:active,
+.button_active {
+    background-color: @active;
+    background-image: linear-gradient(to bottom, #2A7BFF, #1453C8);
+    border-color: @neon;
+    box-shadow: 0 0 12px rgba(56, 200, 255, 0.75);
+}
+
+.button_active {
+    border: 1px solid @neon;
+    border-radius: .7em;
+}
+
+button:disabled,
+button.color1:disabled,
+button.color2:disabled,
+button.color3:disabled,
+button.color4:disabled {
+    background-image: none;
+    background-color: #0A1224;
+    border: 1px solid #1A2A48;
+    box-shadow: none;
+}
+
+button:focus,
+button.color1:focus,
+button.color2:focus,
+button.color3:focus,
+button.color4:focus,
+.dialog button:focus {
+    outline: .1em dashed @neon;
+    outline-offset: .1em;
+}
+
+button.status {
+    background-color: transparent;
+}
+
+button.file-list {
+    background-color: @bg-panel;
+    border: 1px solid #16305E;
+    border-radius: .5em;
+}
+
+button.update,
+button.invalid {
+    background-color: @buttons-bg;
+    border: 1px solid @neon-dim;
+    border-bottom: .25em solid;
+    border-radius: .6em;
+}
+
+button.update { border-bottom-color: @color3; }
+button.invalid { border-bottom-color: @error; }
+
+/* the estop button (action bar) glows red */
+.action_bar button#emergency {
+    border-color: rgba(255, 61, 74, 0.7);
+    box-shadow: 0 0 8px rgba(255, 61, 74, 0.45);
+}
+
+/* ---------- inputs ---------- */
+entry {
+    background-color: @bg-panel;
+    border: 1px solid @neon-dim;
+    border-radius: .4em;
+}
+
+combobox button,
+menu,
+menuitem,
+combobox menuitem {
+    background-color: @bg-panel2;
+    border-color: @lines;
+}
+
+popover {
+    background-color: @bg-panel;
+    border: 1px solid @neon-dim;
+}
+
+switch {
+    background-color: @active-dark;
+    border: 1px solid @lines;
+}
+
+switch:checked {
+    background-color: @echo;
+    box-shadow: 0 0 8px rgba(61, 235, 110, 0.5);
+}
+
+switch slider {
+    background-color: @text;
+    border-radius: 3em;
+}
+
+treeview.view check {
+    background-color: @active-dark;
+}
+
+treeview.view check:checked {
+    background-color: @echo;
+    -gtk-icon-source: url("./styles/neon/images/complete.svg");
+}
+
+trough {
+    background-color: #0E1B38;
+    border: 1px solid #1A3060;
+    border-radius: 1em;
+    color: @text;
+}
+
+trough highlight,
+trough progress {
+    background-image: linear-gradient(to right, #2F7BFF, #38C8FF);
+    border-radius: 1em;
+    border-color: @bg;
+    box-shadow: 0 0 8px rgba(56, 200, 255, 0.6);
+}
+
+scale slider {
+    background-color: @text;
+    border: 2px solid @neon;
+    border-radius: 2em;
+    box-shadow: 0 0 8px rgba(56, 200, 255, 0.7);
+}
+
+scale-mark,
+scale mark {
+    color: @text-muted;
+}
+
+scrollbar,
+scrollbar button,
+scrollbar trough {
+    background-color: @bg;
+    border: 0;
+}
+
+scrollbar slider {
+    background-color: rgba(56, 200, 255, 0.35);
+    border: 1px solid rgba(56, 200, 255, 0.55);
+    border-radius: 1em;
+}
+
+textview text {
+    background-color: @bg-panel;
+}
+
+textview .time {
+    color: @text-muted;
+}
+
+/* ---------- frames & lists ---------- */
+.frame-item {
+    background-color: @bg-panel;
+    border: 1px solid #16305E;
+    border-radius: .5em;
+    margin: .15em;
+}
+
+.heater-grid,
+.heater-list {
+    background-color: transparent;
+}
+
+/* compact temperature list on the main menu: all rows fit, no scrollbar */
+.heater-grid button {
+    background-color: @bg-panel;
+    border: 1px solid #16305E;
+    border-radius: .5em;
+    min-height: 1.75em;
+    margin: .1em .15em;
+    padding: 0 .4em;
+}
+
+.heater-grid label {
+    font-size: .9em;
+}
+
+.heater-list scrollbar slider {
+    min-width: .35em;
+}
+
+.heatergraph {
+    min-height: 6em;
+}
+
+.heatergraph {
+    background-color: @bg-panel;
+    border: 1px solid #16305E;
+    border-radius: .6em;
+}
+
+.graph_label {
+    background-color: transparent;
+}
+
+/* ---------- dialogs, popups, keypads ---------- */
+.dialog {
+    background-color: @bg-panel;
+    border: 1px solid @neon-dim;
+}
+
+.dialog button {
+    background-color: @buttons-bg;
+    background-image: linear-gradient(to bottom, #11285A, #0A1735);
+    border: 1px solid @neon-dim;
+    border-radius: .6em;
+}
+
+.dialog-error { border-bottom: .25em solid @error; }
+.dialog-warning { border-bottom: .25em solid @warning; }
+.dialog-info { border-bottom: .25em solid @neon; }
+.dialog-default { border-bottom: .25em solid @color3; }
+.dialog-secondary { border-bottom: .25em solid @color2; }
+.dialog-primary { border-bottom: .25em solid @color1; }
+
+.horizontal_togglebuttons {
+    background-color: @buttons-bg;
+    border: 1px solid @lines;
+}
+
+.horizontal_togglebuttons_active,
+button:active.horizontal_togglebuttons {
+    background-color: @active;
+    border-color: @neon;
+}
+
+.numpad_key,
+.keyboard_pad,
+.numpad_button {
+    background-color: @buttons-bg;
+    border: 1px solid #1A3060;
+    border-radius: .4em;
+}
+
+.message_popup {
+    border-bottom: 1px solid @neon;
+}
+
+.message_popup_echo,
+.message_popup_echo button { background-color: @echo; }
+.message_popup_warning,
+.message_popup_warning button { background-color: @warning; }
+.message_popup_error,
+.message_popup_error button { background-color: @error; }
+
+.message {
+    background-color: @error;
+    border-color: @error;
+    color: @text;
+}
+
+.message button {
+    background-color: @text;
+    color: @bg;
+}
+
+.warning { background-color: @warning; }
+.error { background-color: @error; }
+
+/* ---------- stock job status (kept readable if shown) ---------- */
+.printing-filename,
+.printing-status,
+.printing-progress-text,
+.printing-status-label {
+    color: @text;
+}
+
+.printing-thumbnail {
+    background-color: @bg-panel;
+    border: 1px solid #16305E;
+    border-radius: .6em;
+}
+
+.fan_slider { color: @text; }
+
+.spoolman_low { color: @warning; }
+
+.endstop-open { color: @color3; }
+.endstop-triggered { color: @error; }
+
+.filament_sensor_detected { color: @color3; }
+.filament_sensor_empty { color: @error; }
